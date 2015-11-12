@@ -1,0 +1,11 @@
+Package: tvd
+Version: 0.1
+Section: utils
+Maintainer: Carl J Smith <BM-NBHLt5EUFVEbRCmrbVrfCyaB2c8d24U9>
+Installed-Size: 48
+Homepage: hacker-haven.com
+Priority: optional
+Architecture: all
+Depends: python (>=2.7)
+Description: Backend to dynamicly create and destroy virtual machines
+ Backend to connect to a virt-manager server in order to create and destroy virtual machines as needed based on clients connected.
