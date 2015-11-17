@@ -108,6 +108,12 @@ for arg in inputs:
 		destAddress= arguments[0]
 		# set the runtype to connect
 		runType = 'connect'
+	elif (mainArgument in ['s','server-setup']):
+		destAddress= arguments[0]
+		runType='serverSetup'
+	elif (mainArgument in ['S','server-connect']):
+		destAddress= arguments[0]
+		runType='serverConnect'
 ####################################################################
 # deliver the payload after reading all arguments to the program
 ####################################################################
@@ -116,19 +122,45 @@ if runType=='connect':
 	machineName=os.popen('ifconfig eth0 | sed "s/eth0.*Link.*.HWaddr //g" | sed "s/ $^inet.*//g" | sed "/^$/d" | sed "s/:/_/g"').read().split(' ')[0]
 	# delete previous instance of virtual machine, if one does
 	#  not exist then this does nothing
-	print('ssh -t '+destAddress+' "virsh undefine '+machineName+' --remove-all-storage --wipe-storage"')
-	os.system('ssh -t '+destAddress+' "virsh undefine '+machineName+' --remove-all-storage --wipe-storage"')
+	if '--debug-run' in sys.argv:
+		print('ssh -t '+destAddress+' "virsh undefine '+machineName+' --remove-all-storage --wipe-storage"')
+	else:
+		os.system('ssh -t '+destAddress+' "virsh undefine '+machineName+' --remove-all-storage --wipe-storage"')
 	# connect to a remote virt-manager instance and create
 	#  a new instance of the virtual machine
-	print('ssh -t '+destAddress+' "virt-clone --replace -o baseImage --name '+machineName+' --file /usr/share/diskimages/'+machineName+'.qcow2;"')
-	os.system('ssh -t '+destAddress+' "virt-clone -o baseImage --name '+machineName+' --file /usr/share/diskimages/'+machineName+'.qcow2;"')
+	if '--debug-run' in sys.argv:
+		#print('ssh -t '+destAddress+' "virt-clone --replace -o baseImage --name '+machineName+' --file /usr/share/diskimages/'+machineName+'.qcow2;"')
+		print('ssh -t '+destAddress+' "virt-clone -o baseImage --name '+machineName+' --file /var/lib/libvirt/images/'+machineName+'.qcow2;"')
+	else:
+		#os.system('ssh -t '+destAddress+' "virt-clone -o baseImage --name '+machineName+' --file /usr/share/diskimages/'+machineName+'.qcow2;"')
+		os.system('ssh -t '+destAddress+' "virt-clone -o baseImage --name '+machineName+' --file /var/lib/libvirt/images/'+machineName+'.qcow2;"')
 	# launch virt-viewer to remotely connect to newly created machine
 	#print('virt-viewer -frk --connect qemu+ssh://'+destAddress+'/ '+machineName)
 	#os.system('virt-viewer -frk --connect qemu+ssh://'+destAddress+'/ '+machineName)
 	# start the virtual machine
-	os.system('ssh -t '+destAddress+' "virsh start '+machineName)
+	if '--debug-run' in sys.argv:
+		#print('ssh -t '+destAddress+' "aa-complain /usr/sbin/libvirtd"')
+		print('ssh -t '+destAddress+' "virsh start '+machineName+'"')
+		#print('ssh -t '+destAddress+' "aa-enforce /usr/sbin/libvirtd"')
+	else:
+		#os.system('ssh -t '+destAddress+' "aa-complain /usr/sbin/libvirtd"')
+		os.system('ssh -t '+destAddress+' "virsh start '+machineName+'"')
+		#os.system('ssh -t '+destAddress+' "aa-enforce /usr/sbin/libvirtd"')
 	# run virt-viewer though x11 forwarding
-	print('ssh '+destAddress+' -t -X virt-viewer -frk '+machineName)
-	os.system('ssh '+destAddress+' -t -X virt-viewer -frk '+machineName)
+	if '--debug-run' in sys.argv:
+		print('ssh '+destAddress+' -t -X virt-viewer -frk '+machineName)
+	else:
+		os.system('ssh '+destAddress+' -t -X virt-viewer -frk '+machineName)
 	# -r = reconnect, -k = kiosk mode, -f = fullscreen
+elif runType=='serverConnect':
+	if os.path.exists('~/.ssh/id_rsa'):
+		print('SSH Key exists! Skipping key generation.')	
+	else:
+		# create rsa key for client
+		os.system('ssh-keygen -N "" -f ~/.ssh/id_rsa')
+	# copy the key to the server
+	os.system('ssh-copy-id '+destAddress)
+elif runType=='serverSetup':
+	os.system('ssh -t '+destAddress+' "sudo apt-get install virt-manager --assume-yes"')
+	os.system('ssh -t '+destAddress+' "sudo apt-get install virt-viewer --assume-yes"')
 exit()

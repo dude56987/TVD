@@ -16,8 +16,6 @@ build-deb:
 	mkdir -p debian/usr
 	mkdir -p debian/usr/bin
 	mkdir -p debian/etc
-	mkdir -p debian/usr/share/diskimages
-	touch debian/usr/share/diskimages/.placeholder
 	cp tvd.py ./debian/usr/bin/tvd
 	chmod +x ./debian/usr/bin/tvd
 	# create the md5sums file
